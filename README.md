@@ -38,7 +38,20 @@ Al arrancar la app en producción (contenedor), se aplican automáticamente las 
 | `npm run db:push` | Aplica el esquema a la DB |
 | `npm run db:migrate` | Ejecuta migraciones |
 | `npm run db:seed` | Inserta rol admin, usuario Mick y posts ES/EN |
-| `npm run db:studio` | Abre Drizzle Studio |
+| `npm run db:studio` | Abre Drizzle Studio en local (`./data/diglot.db`, puerto 4983) |
+
+### Drizzle Studio (solo local)
+
+Interfaz web para ver/editar/eliminar usuarios, posts y comentarios. **No** va en Docker ni en producción (`drizzle-kit` es solo `devDependency`).
+
+```bash
+# Si el blog está en Docker, páralo primero (evita SQLITE_BUSY / database is locked)
+docker compose stop
+
+npm run db:studio
+```
+
+Abre `https://local.drizzle.studio` (proxy a `http://127.0.0.1:4983`). Usa `DATABASE_URL` de `.env` → `./data/diglot.db`.
 
 ## Docker / Portainer
 

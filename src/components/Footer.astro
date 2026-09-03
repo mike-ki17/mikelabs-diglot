@@ -1,0 +1,67 @@
+---
+import { languages, type Lang, t } from '../i18n/ui';
+
+interface Props {
+	lang: Lang;
+}
+
+const { lang } = Astro.props;
+const copy = t(lang);
+const year = new Date().getFullYear();
+---
+
+<footer class="mt-auto border-t border-slate-200 bg-white/60">
+	<div class="mx-auto grid max-w-6xl gap-8 px-4 py-12 sm:grid-cols-3 sm:px-6">
+		<div>
+			<p class="text-sm font-semibold tracking-tight text-slate-900">{copy.siteName}</p>
+			<p class="mt-2 text-sm text-slate-500">{copy.homeSubtitle}</p>
+		</div>
+
+		<div>
+			<p class="text-xs font-semibold uppercase tracking-wide text-slate-400">
+				{copy.footerBlog}
+			</p>
+			<ul class="mt-3 space-y-2 text-sm">
+				<li>
+					<a href={`/${lang}`} class="text-slate-600 transition-colors hover:text-slate-900">
+						{copy.footerHome}
+					</a>
+				</li>
+				<li>
+					<a href={`/${lang}`} class="text-slate-600 transition-colors hover:text-slate-900">
+						{copy.footerBlog}
+					</a>
+				</li>
+			</ul>
+		</div>
+
+		<div>
+			<p class="text-xs font-semibold uppercase tracking-wide text-slate-400">
+				{copy.footerLanguage}
+			</p>
+			<ul class="mt-3 space-y-2 text-sm">
+				{
+					(Object.keys(languages) as Lang[]).map((code) => (
+						<li>
+							<a
+								href={`/${code}`}
+								class:list={[
+									'transition-colors hover:text-slate-900',
+									code === lang ? 'font-medium text-slate-900' : 'text-slate-600',
+								]}
+							>
+								{languages[code]}
+							</a>
+						</li>
+					))
+				}
+			</ul>
+		</div>
+	</div>
+
+	<div class="border-t border-slate-100">
+		<p class="mx-auto max-w-6xl px-4 py-4 text-center text-xs text-slate-400 sm:px-6">
+			© {year} {copy.siteName}. {copy.footerRights}
+		</p>
+	</div>
+</footer>

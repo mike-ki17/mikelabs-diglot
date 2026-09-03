@@ -5,7 +5,7 @@ import { t } from '../i18n/ui';
 
 interface Props {
 	lang: Lang;
-	post: Pick<Post, 'title' | 'slug' | 'createdAt'>;
+	post: Pick<Post, 'title' | 'slug' | 'createdAt' | 'coverImageUrl'>;
 }
 
 const { lang, post } = Astro.props;
@@ -15,14 +15,38 @@ const date = post.createdAt
 	: null;
 ---
 
-<article class="border-b border-stone-200 py-6 last:border-b-0">
-	<a href={`/${lang}/blog/${post.slug}`} class="group block">
-		<h2 class="text-xl font-semibold text-stone-900 group-hover:underline">
-			{post.title}
-		</h2>
-		{date && <time class="mt-1 block text-sm text-stone-500" datetime={post.createdAt?.toISOString()}>{date}</time>}
-		<span class="mt-3 inline-block text-sm font-medium text-stone-700 group-hover:underline">
-			{copy.readMore} →
-		</span>
+<article
+	class="group overflow-hidden rounded-2xl bg-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+>
+	<a href={`/${lang}/blog/${post.slug}`} class="block">
+		<div class="aspect-[16/10] overflow-hidden bg-slate-100">
+			{
+				post.coverImageUrl ? (
+					<img
+						src={post.coverImageUrl}
+						alt=""
+						class="h-full w-full object-cover transition-opacity duration-200 group-hover:opacity-90"
+					/>
+				) : (
+					<div class="h-full w-full bg-gradient-to-br from-slate-100 via-blue-50 to-violet-100 transition-opacity duration-200 group-hover:opacity-90" />
+				)
+			}
+		</div>
+		<div class="p-5">
+			{date && (
+				<time
+					class="text-xs font-medium uppercase tracking-wide text-slate-400"
+					datetime={post.createdAt?.toISOString()}
+				>
+					{date}
+				</time>
+			)}
+			<h2 class="mt-2 text-lg font-semibold tracking-tight text-slate-900 group-hover:text-slate-700">
+				{post.title}
+			</h2>
+			<span class="mt-3 inline-block text-sm font-medium text-slate-500 transition-colors group-hover:text-slate-800">
+				{copy.readMore} →
+			</span>
+		</div>
 	</a>
 </article>

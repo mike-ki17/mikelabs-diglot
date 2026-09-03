@@ -1,0 +1,59 @@
+---
+import { languages, type Lang, t } from '../i18n/ui';
+
+interface Props {
+	lang: Lang;
+}
+
+const { lang } = Astro.props;
+const copy = t(lang);
+---
+
+<header
+	class="sticky top-0 z-50 border-b border-slate-200/60 bg-white/70 backdrop-blur-md"
+>
+	<nav class="relative mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
+		<div class="flex items-center gap-2 text-sm">
+			{
+				(Object.keys(languages) as Lang[]).map((code) => (
+					<a
+						href={`/${code}`}
+						class:list={[
+							'rounded-full px-2.5 py-1 transition-colors hover:bg-slate-100',
+							code === lang
+								? 'font-semibold text-slate-900'
+								: 'text-slate-500 hover:text-slate-800',
+						]}
+					>
+						{languages[code]}
+					</a>
+				))
+			}
+		</div>
+
+		<div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+			<a href={`/${lang}`} class="block" aria-label={copy.siteName}>
+				<div
+					class="flex h-9 items-center justify-center rounded-xl bg-gradient-to-br from-slate-800 via-blue-800 to-violet-700 px-4 text-sm font-semibold tracking-tight text-white shadow-sm"
+				>
+					{copy.siteName}
+				</div>
+			</a>
+		</div>
+
+		<div class="flex items-center gap-2">
+			<a
+				href={`/${lang}#login`}
+				class="rounded-full border border-slate-200 bg-white/80 px-4 py-1.5 text-sm font-medium text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
+			>
+				{copy.logIn}
+			</a>
+			<a
+				href={`/${lang}#join`}
+				class="rounded-full bg-slate-900 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-slate-800"
+			>
+				{copy.join}
+			</a>
+		</div>
+	</nav>
+</header>

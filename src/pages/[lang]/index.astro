@@ -20,6 +20,7 @@ const publishedPosts = await db
 		title: posts.title,
 		slug: posts.slug,
 		createdAt: posts.createdAt,
+		coverImageUrl: posts.coverImageUrl,
 	})
 	.from(posts)
 	.where(and(eq(posts.language, lang), eq(posts.isPublished, true)))
@@ -27,19 +28,23 @@ const publishedPosts = await db
 ---
 
 <BaseLayout lang={lang} title={copy.homeTitle} description={copy.homeSubtitle}>
-	<section>
-		<h1 class="text-3xl font-bold tracking-tight text-stone-900">{copy.homeTitle}</h1>
-		<p class="mt-2 text-stone-600">{copy.homeSubtitle}</p>
+	<section class="mx-auto max-w-6xl">
+		<header class="max-w-2xl">
+			<h1 class="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+				{copy.homeTitle}
+			</h1>
+			<p class="mt-2 text-lg text-slate-600">{copy.homeSubtitle}</p>
+		</header>
 
 		<div class="mt-10">
-			<h2 class="text-sm font-semibold uppercase tracking-wide text-stone-500">
+			<h2 class="text-sm font-semibold uppercase tracking-wide text-slate-400">
 				{copy.postsHeading}
 			</h2>
 			{
 				publishedPosts.length === 0 ? (
-					<p class="mt-4 text-stone-600">{copy.noPosts}</p>
+					<p class="mt-4 text-slate-600">{copy.noPosts}</p>
 				) : (
-					<div class="mt-2">
+					<div class="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
 						{publishedPosts.map((post) => (
 							<PostCard lang={lang} post={post} />
 						))}

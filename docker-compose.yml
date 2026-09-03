@@ -1,16 +1,16 @@
 services:
-  postgres:
-    image: postgres:16-alpine
-    container_name: diglot-postgres
+  astro-blog:
+    build: .
+    image: mikedev19/mikelabs-diglot:latest
+    container_name: astro-blog
     restart: unless-stopped
-    environment:
-      POSTGRES_USER: diglot
-      POSTGRES_PASSWORD: diglot
-      POSTGRES_DB: diglot
     ports:
-      - '5432:5432'
+      - '4321:4321'
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: '4321'
+      DATABASE_URL: file:/app/data/diglot.db
+      AUTH_SECRET: ${AUTH_SECRET}
     volumes:
-      - diglot_pg_data:/var/lib/postgresql/data
-
-volumes:
-  diglot_pg_data:
+      - ./data:/app/data

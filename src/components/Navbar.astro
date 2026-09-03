@@ -1,5 +1,6 @@
 ---
 import { languages, type Lang, t } from '../i18n/ui';
+import { getAuthUser } from '../lib/auth';
 
 interface Props {
 	lang: Lang;
@@ -7,6 +8,7 @@ interface Props {
 
 const { lang } = Astro.props;
 const copy = t(lang);
+const user = await getAuthUser(Astro.cookies);
 ---
 
 <header
@@ -42,18 +44,70 @@ const copy = t(lang);
 		</div>
 
 		<div class="flex items-center gap-2">
-			<a
-				href={`/${lang}#login`}
-				class="rounded-full border border-slate-200 bg-white/80 px-4 py-1.5 text-sm font-medium text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
-			>
-				{copy.logIn}
-			</a>
-			<a
-				href={`/${lang}#join`}
-				class="rounded-full bg-slate-900 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-slate-800"
-			>
-				{copy.join}
-			</a>
+			{
+				user ? (
+					<div class="flex items-center gap-3">
+						<div class="flex items-center gap-2">
+							{user.avatarUrl ? (
+								<img
+									src={user.avatarUrl}
+									alt={user.name}
+									class="h-8 w-8 rounded-full object-cover ring-2 ring-slate-100"
+								/>
+							) : (
+								<div class="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-slate-200 to-blue-100 text-sm font-semibold text-slate-600">
+									{user.name.charAt(0)}
+								</div>
+							)}
+							<span class="hidden text-sm font-medium text-slate-700 sm:inline">
+								{user.name}
+							</span>
+						</div>
+						<button
+							type="button"
+							id="logout-btn"
+							data-lang={lang}
+							class="rounded-full border border-slate-200 bg-white/80 px-4 py-1.5 text-sm font-medium text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
+						>
+							{copy.logOut}
+						</button>
+					</div>
+				) : (
+					<>
+						<a
+							href={`/${lang}/login`}
+							class="rounded-full border border-slate-200 bg-white/80 px-4 py-1.5 text-sm font-medium text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
+						>
+							{copy.logIn}
+						</a>
+						<a
+							href={`/${lang}/join`}
+							class="rounded-full bg-slate-900 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-slate-800"
+						>
+							{copy.join}
+						</a>
+					</>
+				)
+			}
 		</div>
 	</nav>
 </header>
+
+{
+	user && (
+		<script>
+			const btn = document.getElementById('logout-btn');
+			btn?.addEventListener('click', async () => {
+				const lang = btn.dataset.lang || 'es';
+				try {
+					await fetch('/api/auth/logout', {
+						method: 'POST',
+						credentials: 'include',
+					});
+				} finally {
+					window.location.href = `/${lang}`;
+				}
+			});
+		</script>
+	)
+}

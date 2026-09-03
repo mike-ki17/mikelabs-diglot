@@ -1,2 +1,14 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
+
+@theme {
+	--font-display: "Fraunces", ui-serif, Georgia, "Times New Roman", serif;
+}
+
+.site-name {
+	font-family: var(--font-display);
+	font-optical-sizing: auto;
+	font-weight: 550;
+	letter-spacing: -0.03em;
+	line-height: 1;
+}

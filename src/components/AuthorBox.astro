@@ -1,4 +1,5 @@
 ---
+import { Image } from 'astro:assets';
 import type { User } from '../db/schema';
 import type { Lang } from '../i18n/ui';
 import { t } from '../i18n/ui';
@@ -24,9 +25,12 @@ const roleLabel = author.roleName === 'admin' ? copy.authorRole : author.roleNam
 	<div class="flex items-start gap-4">
 		{
 			author.avatarUrl ? (
-				<img
+				<Image
 					src={author.avatarUrl}
 					alt={author.name}
+					width={56}
+					height={56}
+					loading="lazy"
 					class="h-14 w-14 shrink-0 rounded-full object-cover ring-2 ring-slate-100"
 				/>
 			) : (

@@ -72,8 +72,10 @@ async function seed() {
 Este es el **primer artículo** del blog Diglot en español.
 
 Puedes editar este contenido en markdown desde la base de datos.`,
+				excerpt: 'El primer artículo del blog Diglot en español.',
 				coverImageUrl: null,
 				language: 'es',
+				translationGroupId: 1,
 				isPublished: true,
 			},
 			{
@@ -85,12 +87,30 @@ Puedes editar este contenido en markdown desde la base de datos.`,
 This is the **first article** of the Diglot blog in English.
 
 You can edit this markdown content from the database.`,
+				excerpt: 'The first article of the Diglot blog in English.',
 				coverImageUrl: null,
 				language: 'en',
+				translationGroupId: 1,
 				isPublished: true,
 			},
 		])
 		.onConflictDoNothing();
+
+	// Link existing seed posts if they were inserted before translationGroupId existed
+	await db
+		.update(posts)
+		.set({
+			translationGroupId: 1,
+			excerpt: 'El primer artículo del blog Diglot en español.',
+		})
+		.where(eq(posts.slug, 'hola-mundo'));
+	await db
+		.update(posts)
+		.set({
+			translationGroupId: 1,
+			excerpt: 'The first article of the Diglot blog in English.',
+		})
+		.where(eq(posts.slug, 'hello-world'));
 
 	console.log(
 		'Seed OK: roles admin/reader, usuario Mick Castro (password123), posts es/en',

@@ -1,11 +1,20 @@
 ---
-import { and, asc, eq } from 'drizzle-orm';
+import { Image } from 'astro:assets';
+import { and, asc, eq, ne } from 'drizzle-orm';
 import { marked } from 'marked';
 import AuthorBox from '../../../components/AuthorBox.astro';
 import { db } from '../../../db';
 import { comments, posts, roles, users } from '../../../db/schema';
-import { isLang, t } from '../../../i18n/ui';
+import { isLang, type Lang, t } from '../../../i18n/ui';
 import { getAuthUser } from '../../../lib/auth';
+import {
+	absoluteUrl,
+	blogPostingJsonLd,
+	canonicalFromAstro,
+	excerptFromContent,
+	type ArticleType,
+	type HreflangAlternates,
+} from '../../../lib/seo';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 
 const { lang: langParam, slug } = Astro.params;
@@ -17,6 +26,7 @@ if (!langParam || !isLang(langParam) || !slug) {
 const lang = langParam;
 const copy = t(lang);
 const authUser = await getAuthUser(Astro.cookies);
+const site = Astro.site;
 
 const result = await db
 	.select({
@@ -24,8 +34,11 @@ const result = await db
 		title: posts.title,
 		slug: posts.slug,
 		content: posts.content,
+		excerpt: posts.excerpt,
 		coverImageUrl: posts.coverImageUrl,
+		translationGroupId: posts.translationGroupId,
 		createdAt: posts.createdAt,
+		updatedAt: posts.updatedAt,
 		authorName: users.name,
 		authorBio: users.bio,
 		authorAvatarUrl: users.avatarUrl,
@@ -68,9 +81,67 @@ const postComments = await db
 	.all();
 
 const dateFmt = new Intl.DateTimeFormat(lang, { dateStyle: 'medium' });
+
+const canonicalURL = canonicalFromAstro(Astro.url, site);
+const description =
+	result.excerpt?.trim() || excerptFromContent(result.content);
+const ogImage = result.coverImageUrl
+	? absoluteUrl(result.coverImageUrl, site)
+	: undefined;
+
+const alternates: HreflangAlternates = {
+	[lang]: canonicalURL,
+};
+
+if (result.translationGroupId != null) {
+	const sibling = await db
+		.select({
+			slug: posts.slug,
+			language: posts.language,
+		})
+		.from(posts)
+		.where(
+			and(
+				eq(posts.translationGroupId, result.translationGroupId),
+				ne(posts.language, lang),
+				eq(posts.isPublished, true),
+			),
+		)
+		.get();
+
+	if (sibling && isLang(sibling.language)) {
+		const siblingLang = sibling.language as Lang;
+		alternates[siblingLang] = absoluteUrl(
+			`/${siblingLang}/blog/${sibling.slug}`,
+			site,
+		);
+	}
+}
+
+const jsonLd = blogPostingJsonLd({
+	headline: result.title,
+	description,
+	image: ogImage,
+	datePublished: result.createdAt,
+	dateModified: result.updatedAt,
+	inLanguage: lang,
+	canonicalUrl: canonicalURL,
+	authorName: result.authorName,
+});
+
+const articleType: ArticleType = 'article';
 ---
 
-<BaseLayout lang={lang} title={result.title}>
+<BaseLayout
+	lang={lang}
+	title={result.title}
+	description={description}
+	image={ogImage}
+	canonicalURL={canonicalURL}
+	articleType={articleType}
+	alternates={alternates}
+	jsonLd={jsonLd}
+>
 	<div class="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[160px_minmax(0,1fr)_160px] xl:grid-cols-[180px_minmax(0,1fr)_180px]">
 		<aside class="hidden lg:block">
 			<div
@@ -91,9 +162,13 @@ const dateFmt = new Intl.DateTimeFormat(lang, { dateStyle: 'medium' });
 
 				{
 					result.coverImageUrl && (
-						<img
+						<Image
 							src={result.coverImageUrl}
-							alt=""
+							alt={result.title}
+							width={1200}
+							height={600}
+							loading="eager"
+							fetchpriority="high"
 							class="mt-6 aspect-[2/1] w-full rounded-2xl object-cover shadow-sm"
 						/>
 					)
@@ -196,9 +271,12 @@ const dateFmt = new Intl.DateTimeFormat(lang, { dateStyle: 'medium' });
 							<li class="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
 								<div class="flex items-center gap-3">
 									{comment.avatarUrl ? (
-										<img
+										<Image
 											src={comment.avatarUrl}
-											alt=""
+											alt={comment.name}
+											width={36}
+											height={36}
+											loading="lazy"
 											class="h-9 w-9 rounded-full object-cover"
 										/>
 									) : (

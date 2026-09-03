@@ -2,17 +2,37 @@
 import '../styles/global.css';
 import Footer from '../components/Footer.astro';
 import Navbar from '../components/Navbar.astro';
-import { type Lang, t } from '../i18n/ui';
+import SEO from '../components/SEO.astro';
+import {
+	canonicalFromAstro,
+	type ArticleType,
+	type HreflangAlternates,
+} from '../lib/seo';
+import { type Lang } from '../i18n/ui';
 
-interface Props {
+export interface Props {
 	lang: Lang;
 	title: string;
 	description?: string;
+	image?: string;
+	canonicalURL?: string;
+	articleType?: ArticleType;
+	alternates: HreflangAlternates;
+	noindex?: boolean;
+	jsonLd?: Record<string, unknown> | Record<string, unknown>[];
 }
 
-const { lang, title, description } = Astro.props;
-const copy = t(lang);
-const pageTitle = `${title} · ${copy.siteName}`;
+const {
+	lang,
+	title,
+	description,
+	image,
+	canonicalURL = canonicalFromAstro(Astro.url, Astro.site),
+	articleType = 'website',
+	alternates,
+	noindex = false,
+	jsonLd,
+} = Astro.props;
 ---
 
 <!doctype html>
@@ -21,9 +41,18 @@ const pageTitle = `${title} · ${copy.siteName}`;
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="generator" content={Astro.generator} />
-		{description && <meta name="description" content={description} />}
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<title>{pageTitle}</title>
+		<SEO
+			lang={lang}
+			title={title}
+			description={description}
+			image={image}
+			canonicalURL={canonicalURL}
+			articleType={articleType}
+			alternates={alternates}
+			noindex={noindex}
+			jsonLd={jsonLd}
+		/>
 	</head>
 	<body class="relative flex min-h-screen flex-col bg-slate-50 text-slate-900 antialiased">
 		<div
@@ -44,10 +73,10 @@ const pageTitle = `${title} · ${copy.siteName}`;
 			</div>
 		</div>
 
-		<Navbar lang={lang} />
+		<Navbar lang={lang} alternates={alternates} />
 		<main class="relative flex-1 px-4 py-10 sm:px-6">
 			<slot />
 		</main>
-		<Footer lang={lang} />
+		<Footer lang={lang} alternates={alternates} />
 	</body>
 </html>

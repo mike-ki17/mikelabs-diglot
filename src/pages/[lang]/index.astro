@@ -4,6 +4,7 @@ import PostCard from '../../components/PostCard.astro';
 import { db } from '../../db';
 import { posts } from '../../db/schema';
 import { isLang, t } from '../../i18n/ui';
+import { pageAlternates } from '../../lib/seo';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 
 const { lang: langParam } = Astro.params;
@@ -14,6 +15,8 @@ if (!langParam || !isLang(langParam)) {
 
 const lang = langParam;
 const copy = t(lang);
+const site = Astro.site;
+const alternates = pageAlternates(lang, '/', site);
 
 const publishedPosts = await db
 	.select({
@@ -27,7 +30,13 @@ const publishedPosts = await db
 	.orderBy(desc(posts.createdAt));
 ---
 
-<BaseLayout lang={lang} title={copy.homeTitle} description={copy.homeSubtitle}>
+<BaseLayout
+	lang={lang}
+	title={copy.homeTitle}
+	description={copy.homeSubtitle}
+	articleType="website"
+	alternates={alternates}
+>
 	<section class="mx-auto max-w-6xl">
 		<header class="max-w-2xl">
 			<h1 class="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">

@@ -1,14 +1,27 @@
 ---
+import { Image } from 'astro:assets';
 import { languages, type Lang, t } from '../i18n/ui';
+import type { HreflangAlternates } from '../lib/seo';
 import { getAuthUser } from '../lib/auth';
 
 interface Props {
 	lang: Lang;
+	alternates?: HreflangAlternates;
 }
 
-const { lang } = Astro.props;
+const { lang, alternates = {} } = Astro.props;
 const copy = t(lang);
 const user = await getAuthUser(Astro.cookies);
+
+function langHref(code: Lang): string {
+	const absolute = alternates[code];
+	if (!absolute) return `/${code}`;
+	try {
+		return new URL(absolute).pathname;
+	} catch {
+		return absolute.startsWith('/') ? absolute : `/${code}`;
+	}
+}
 ---
 
 <header
@@ -19,7 +32,7 @@ const user = await getAuthUser(Astro.cookies);
 			{
 				(Object.keys(languages) as Lang[]).map((code) => (
 					<a
-						href={`/${code}`}
+						href={langHref(code)}
 						class:list={[
 							'rounded-full px-2.5 py-1 transition-colors hover:bg-slate-100',
 							code === lang
@@ -49,9 +62,12 @@ const user = await getAuthUser(Astro.cookies);
 					<div class="flex items-center gap-3">
 						<div class="flex items-center gap-2">
 							{user.avatarUrl ? (
-								<img
+								<Image
 									src={user.avatarUrl}
 									alt={user.name}
+									width={32}
+									height={32}
+									loading="lazy"
 									class="h-8 w-8 rounded-full object-cover ring-2 ring-slate-100"
 								/>
 							) : (

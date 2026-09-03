@@ -39,8 +39,10 @@ export const posts = sqliteTable(
 		title: text('title').notNull(),
 		slug: text('slug').notNull(),
 		content: text('content').notNull(),
+		excerpt: text('excerpt'),
 		coverImageUrl: text('cover_image_url'),
 		language: text('language', { enum: ['es', 'en'] }).notNull(),
+		translationGroupId: integer('translation_group_id'),
 		createdAt: integer('created_at', { mode: 'timestamp' })
 			.notNull()
 			.default(sql`(unixepoch())`),
@@ -55,6 +57,7 @@ export const posts = sqliteTable(
 		uniqueIndex('posts_slug_language_idx').on(table.slug, table.language),
 		index('posts_slug_idx').on(table.slug),
 		index('posts_language_idx').on(table.language),
+		index('posts_translation_group_id_idx').on(table.translationGroupId),
 	],
 );
 

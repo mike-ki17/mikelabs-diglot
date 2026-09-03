@@ -9,7 +9,7 @@ export const defaultLang: Lang = 'es';
 
 export const ui = {
 	es: {
-		siteName: 'Diglot',
+		siteName: 'Mike',
 		homeTitle: 'Blog',
 		homeSubtitle: 'Artículos en español e inglés.',
 		postsHeading: 'Artículos',
@@ -48,7 +48,7 @@ export const ui = {
 		authorRole: 'Autor',
 	},
 	en: {
-		siteName: 'Diglot',
+		siteName: 'Mike',
 		homeTitle: 'Blog',
 		homeSubtitle: 'Articles in Spanish and English.',
 		postsHeading: 'Articles',

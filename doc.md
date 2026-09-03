@@ -1,24 +1,21 @@
-mikelabs/
+mikelabs-diglot/           # (O el nombre que elegiste)
 ├── src/
-│   ├── content/
-│   │   ├── config.ts              # Validación de esquemas (Zod)
-│   │   └── blog/
-│   │       ├── es/                # Artículos en español
-│   │       │   └── mi-primer-post.md
-│   │       └── en/                # Artículos en inglés
-│   │           └── my-first-post.md
-│   ├── components/                # Componentes UI reusables
-│   ├── layouts/                   # Layouts (BaseLayout.astro, PostLayout.astro)
-│   ├── i18n/                      # Diccionarios de traducción UI (menús, botones)
-│   │   ├── es.json
-│   │   └── en.json
-│   └── pages/                     # Enrutamiento dinámico
-│       ├── index.astro            # Redirección automática o Selector de idioma
+│   ├── db/                # 🚀 NUEVO: Lógica y esquemas de la Base de Datos
+│   │   ├── index.ts       # Conexión a la base de datos
+│   │   └── schema.ts      # Definición de tablas (Usuarios, Roles, Posts, etc.)
+│   ├── components/        # Componentes UI (Nav, Footer, Cards, AuthorBox)
+│   ├── layouts/           # Layouts principales
+│   ├── i18n/              # Diccionarios (ES/EN)
+│   └── pages/
+│       ├── api/           # 🚀 NUEVO: Endpoints para Auth y Formularios
+│       │   └── auth.ts
+│       ├── index.astro    # Redirección de idioma
 │       └── [lang]/
-│           ├── index.astro        # Home según idioma (/es o /en)
+│           ├── index.astro      # Home (hace fetch a la DB para traer los posts)
 │           └── blog/
-│               └── [slug].astro   # Renderizador de artículos por idioma
-├── public/                        # Imágenes estáticas y favicon
-├── Dockerfile                     # Construcción multi-stage para producción
-├── docker-compose.yml
-└── astro.config.mjs
+│               └── [slug].astro # Post individual (lee el contenido desde la DB)
+├── public/                
+├── .env                   # 🚀 NUEVO: Credenciales de DB (NUNCA subir a GitHub)
+├── docker-compose.yml     # (Puede incluir la DB de desarrollo ahora)
+├── Dockerfile             
+└── astro.config.mjs       # Configurado con output: 'server' (SSR)

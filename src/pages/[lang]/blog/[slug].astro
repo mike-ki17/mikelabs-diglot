@@ -1,0 +1,83 @@
+---
+import { and, eq } from 'drizzle-orm';
+import { marked } from 'marked';
+import { db } from '../../../db';
+import { posts, users } from '../../../db/schema';
+import { isLang, t } from '../../../i18n/ui';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+
+const { lang: langParam, slug } = Astro.params;
+
+if (!langParam || !isLang(langParam) || !slug) {
+	return new Response(null, { status: 404, statusText: 'Not Found' });
+}
+
+const lang = langParam;
+const copy = t(lang);
+
+const result = await db
+	.select({
+		id: posts.id,
+		title: posts.title,
+		slug: posts.slug,
+		content: posts.content,
+		coverImageUrl: posts.coverImageUrl,
+		createdAt: posts.createdAt,
+		authorName: users.name,
+	})
+	.from(posts)
+	.innerJoin(users, eq(posts.authorId, users.id))
+	.where(
+		and(
+			eq(posts.slug, slug),
+			eq(posts.language, lang),
+			eq(posts.isPublished, true),
+		),
+	)
+	.get();
+
+if (!result) {
+	return new Response(null, { status: 404, statusText: 'Not Found' });
+}
+
+const htmlContent = await marked.parse(result.content);
+const date = result.createdAt
+	? new Intl.DateTimeFormat(lang, { dateStyle: 'long' }).format(result.createdAt)
+	: null;
+---
+
+<BaseLayout lang={lang} title={result.title}>
+	<article>
+		<a href={`/${lang}`} class="text-sm text-stone-500 hover:text-stone-900">
+			← {copy.backHome}
+		</a>
+
+		{
+			result.coverImageUrl && (
+				<img
+					src={result.coverImageUrl}
+					alt=""
+					class="mt-6 aspect-[2/1] w-full object-cover"
+				/>
+			)
+		}
+
+		<header class="mt-6">
+			<h1 class="text-4xl font-bold tracking-tight text-stone-900">{result.title}</h1>
+			<p class="mt-3 text-sm text-stone-500">
+				{copy.byAuthor} {result.authorName}
+				{date && (
+					<>
+						{' · '}
+						<time datetime={result.createdAt?.toISOString()}>{date}</time>
+					</>
+				)}
+			</p>
+		</header>
+
+		<div
+			class="prose prose-stone mt-10 max-w-none prose-headings:tracking-tight"
+			set:html={htmlContent}
+		/>
+	</article>
+</BaseLayout>

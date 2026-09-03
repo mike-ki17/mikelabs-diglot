@@ -1,0 +1,51 @@
+---
+import { desc, eq, and } from 'drizzle-orm';
+import PostCard from '../../components/PostCard.astro';
+import { db } from '../../db';
+import { posts } from '../../db/schema';
+import { isLang, t } from '../../i18n/ui';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const { lang: langParam } = Astro.params;
+
+if (!langParam || !isLang(langParam)) {
+	return Astro.redirect('/es');
+}
+
+const lang = langParam;
+const copy = t(lang);
+
+const publishedPosts = await db
+	.select({
+		title: posts.title,
+		slug: posts.slug,
+		createdAt: posts.createdAt,
+	})
+	.from(posts)
+	.where(and(eq(posts.language, lang), eq(posts.isPublished, true)))
+	.orderBy(desc(posts.createdAt));
+---
+
+<BaseLayout lang={lang} title={copy.homeTitle} description={copy.homeSubtitle}>
+	<section>
+		<h1 class="text-3xl font-bold tracking-tight text-stone-900">{copy.homeTitle}</h1>
+		<p class="mt-2 text-stone-600">{copy.homeSubtitle}</p>
+
+		<div class="mt-10">
+			<h2 class="text-sm font-semibold uppercase tracking-wide text-stone-500">
+				{copy.postsHeading}
+			</h2>
+			{
+				publishedPosts.length === 0 ? (
+					<p class="mt-4 text-stone-600">{copy.noPosts}</p>
+				) : (
+					<div class="mt-2">
+						{publishedPosts.map((post) => (
+							<PostCard lang={lang} post={post} />
+						))}
+					</div>
+				)
+			}
+		</div>
+	</section>
+</BaseLayout>

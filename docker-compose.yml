@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: diglot-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: diglot
+      POSTGRES_PASSWORD: diglot
+      POSTGRES_DB: diglot
+    ports:
+      - '5432:5432'
+    volumes:
+      - diglot_pg_data:/var/lib/postgresql/data
+
+volumes:
+  diglot_pg_data:

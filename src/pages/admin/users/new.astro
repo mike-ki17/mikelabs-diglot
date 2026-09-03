@@ -1,0 +1,25 @@
+---
+import { asc } from 'drizzle-orm';
+import UserForm from '../../../components/admin/UserForm.astro';
+import { db } from '../../../db';
+import { roles } from '../../../db/schema';
+import { getAuthUser } from '../../../lib/auth';
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+
+const user = await getAuthUser(Astro.cookies);
+if (!user) {
+	return Astro.redirect('/es/login?next=/admin/users/new');
+}
+if (user.roleName !== 'admin') {
+	return Astro.redirect('/es');
+}
+
+const allRoles = await db
+	.select({ id: roles.id, name: roles.name })
+	.from(roles)
+	.orderBy(asc(roles.name));
+---
+
+<AdminLayout title="Nuevo usuario" user={user}>
+	<UserForm roles={allRoles} />
+</AdminLayout>

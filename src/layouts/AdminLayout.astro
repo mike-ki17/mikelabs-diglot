@@ -10,12 +10,17 @@ export interface Props {
 
 const { title, user, currentPath = Astro.url.pathname } = Astro.props;
 
-const navItems = [
+	const navItems = [
 	{ href: '/admin', label: 'Dashboard', match: (p: string) => p === '/admin' },
 	{
 		href: '/admin/posts',
 		label: 'Posts',
 		match: (p: string) => p.startsWith('/admin/posts'),
+	},
+	{
+		href: '/admin/users',
+		label: 'Usuarios',
+		match: (p: string) => p.startsWith('/admin/users'),
 	},
 	{
 		href: '/admin/settings',

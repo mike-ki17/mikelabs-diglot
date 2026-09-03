@@ -1,0 +1,340 @@
+---
+import type { Role, User } from '../../db/schema';
+
+export interface Props {
+	user?: Pick<
+		User,
+		| 'id'
+		| 'name'
+		| 'email'
+		| 'roleId'
+		| 'bio'
+		| 'avatarUrl'
+		| 'socialLinks'
+	> | null;
+	roles: Pick<Role, 'id' | 'name'>[];
+}
+
+const { user = null, roles } = Astro.props;
+const isEdit = Boolean(user?.id);
+const social = user?.socialLinks ?? {};
+
+const inputClass =
+	'w-full rounded-xl border border-slate-200 bg-slate-50/80 px-4 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:border-slate-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-200';
+const labelClass = 'mb-1.5 block text-sm font-medium text-slate-700';
+---
+
+<div class="mx-auto max-w-3xl space-y-6">
+	<form
+		id="user-form"
+		class="space-y-5 rounded-2xl border border-slate-100 bg-white p-6 shadow-sm sm:p-8"
+		novalidate
+	>
+		{
+			isEdit && user && (
+				<input type="hidden" id="user-id" name="id" value={user.id} />
+			)
+		}
+
+		<div class="grid gap-5 sm:grid-cols-2">
+			<div>
+				<label for="name" class={labelClass}>Nombre</label>
+				<input
+					id="name"
+					name="name"
+					type="text"
+					required
+					value={user?.name ?? ''}
+					class={inputClass}
+					placeholder="Nombre completo"
+					autocomplete="name"
+				/>
+			</div>
+
+			<div>
+				<label for="email" class={labelClass}>Email</label>
+				<input
+					id="email"
+					name="email"
+					type="email"
+					required
+					value={user?.email ?? ''}
+					class={inputClass}
+					placeholder="correo@ejemplo.com"
+					autocomplete="email"
+				/>
+			</div>
+		</div>
+
+		<div class="grid gap-5 sm:grid-cols-2">
+			<div>
+				<label for="roleId" class={labelClass}>Rol</label>
+				<select id="roleId" name="roleId" required class={inputClass}>
+					{
+						roles.map((role) => (
+							<option
+								value={role.id}
+								selected={
+									user?.roleId === role.id ||
+									(!user && role.name === 'reader')
+								}
+							>
+								{role.name === 'admin'
+									? 'Administrador'
+									: role.name === 'reader'
+										? 'Lector'
+										: role.name}
+							</option>
+						))
+					}
+				</select>
+			</div>
+
+			<div>
+				<label for="password" class={labelClass}>
+					Contraseña
+					{
+						isEdit && (
+							<span class="font-normal text-slate-400">
+								(dejar vacío para no cambiar)
+							</span>
+						)
+					}
+				</label>
+				<input
+					id="password"
+					name="password"
+					type="password"
+					required={!isEdit}
+					minlength={8}
+					class={inputClass}
+					placeholder={isEdit ? '••••••••' : 'Mínimo 8 caracteres'}
+					autocomplete="new-password"
+				/>
+			</div>
+		</div>
+
+		<div>
+			<label for="bio" class={labelClass}>
+				Bio <span class="font-normal text-slate-400">(opcional)</span>
+			</label>
+			<textarea
+				id="bio"
+				name="bio"
+				rows={3}
+				class={inputClass}
+				placeholder="Breve descripción del autor"
+			>{user?.bio ?? ''}</textarea>
+		</div>
+
+		<div>
+			<label for="avatarUrl" class={labelClass}>
+				URL del avatar <span class="font-normal text-slate-400">(opcional)</span>
+			</label>
+			<input
+				id="avatarUrl"
+				name="avatarUrl"
+				type="url"
+				value={user?.avatarUrl ?? ''}
+				class={inputClass}
+				placeholder="https://…"
+			/>
+		</div>
+
+		<fieldset class="space-y-4">
+			<legend class="text-sm font-medium text-slate-700">
+				Redes sociales
+				<span class="font-normal text-slate-400">(opcional)</span>
+			</legend>
+			<div class="grid gap-5 sm:grid-cols-3">
+				<div>
+					<label for="twitter" class={labelClass}>Twitter / X</label>
+					<input
+						id="twitter"
+						name="twitter"
+						type="url"
+						value={social.twitter ?? ''}
+						class={inputClass}
+						placeholder="https://x.com/…"
+					/>
+				</div>
+				<div>
+					<label for="github" class={labelClass}>GitHub</label>
+					<input
+						id="github"
+						name="github"
+						type="url"
+						value={social.github ?? ''}
+						class={inputClass}
+						placeholder="https://github.com/…"
+					/>
+				</div>
+				<div>
+					<label for="website" class={labelClass}>Sitio web</label>
+					<input
+						id="website"
+						name="website"
+						type="url"
+						value={social.website ?? ''}
+						class={inputClass}
+						placeholder="https://…"
+					/>
+				</div>
+			</div>
+		</fieldset>
+
+		<p id="form-error" class="hidden text-sm text-red-600" role="alert"></p>
+
+		<div class="flex flex-wrap items-center gap-3 pt-2">
+			<button
+				type="submit"
+				id="save-btn"
+				class="rounded-full bg-slate-900 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-slate-800 disabled:opacity-60"
+			>
+				{isEdit ? 'Guardar cambios' : 'Crear usuario'}
+			</button>
+			<a
+				href="/admin/users"
+				class="rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
+			>
+				Cancelar
+			</a>
+		</div>
+	</form>
+</div>
+
+<script>
+	const form = document.getElementById('user-form');
+	const nameInput = document.getElementById('name');
+	const emailInput = document.getElementById('email');
+	const roleSelect = document.getElementById('roleId');
+	const passwordInput = document.getElementById('password');
+	const bioInput = document.getElementById('bio');
+	const avatarInput = document.getElementById('avatarUrl');
+	const twitterInput = document.getElementById('twitter');
+	const githubInput = document.getElementById('github');
+	const websiteInput = document.getElementById('website');
+	const userIdInput = document.getElementById('user-id');
+	const errorEl = document.getElementById('form-error');
+	const saveBtn = document.getElementById('save-btn');
+	const isEdit = Boolean(userIdInput);
+
+	form?.addEventListener('submit', async (event) => {
+		event.preventDefault();
+		if (!errorEl) return;
+
+		errorEl.classList.add('hidden');
+		errorEl.textContent = '';
+
+		const name =
+			nameInput instanceof HTMLInputElement ? nameInput.value.trim() : '';
+		const email =
+			emailInput instanceof HTMLInputElement ? emailInput.value.trim() : '';
+		const roleId =
+			roleSelect instanceof HTMLSelectElement
+				? Number(roleSelect.value)
+				: NaN;
+		const password =
+			passwordInput instanceof HTMLInputElement
+				? passwordInput.value
+				: '';
+		const bio =
+			bioInput instanceof HTMLTextAreaElement ? bioInput.value.trim() : '';
+		const avatarUrl =
+			avatarInput instanceof HTMLInputElement
+				? avatarInput.value.trim()
+				: '';
+		const twitter =
+			twitterInput instanceof HTMLInputElement
+				? twitterInput.value.trim()
+				: '';
+		const github =
+			githubInput instanceof HTMLInputElement
+				? githubInput.value.trim()
+				: '';
+		const website =
+			websiteInput instanceof HTMLInputElement
+				? websiteInput.value.trim()
+				: '';
+		const id =
+			userIdInput instanceof HTMLInputElement
+				? Number(userIdInput.value)
+				: undefined;
+
+		if (!name || !email || !Number.isInteger(roleId) || roleId <= 0) {
+			errorEl.textContent = 'Completa nombre, email y rol.';
+			errorEl.classList.remove('hidden');
+			return;
+		}
+
+		if (!isEdit && password.length < 8) {
+			errorEl.textContent = 'La contraseña debe tener al menos 8 caracteres.';
+			errorEl.classList.remove('hidden');
+			return;
+		}
+
+		if (isEdit && password.length > 0 && password.length < 8) {
+			errorEl.textContent = 'La contraseña debe tener al menos 8 caracteres.';
+			errorEl.classList.remove('hidden');
+			return;
+		}
+
+		if (saveBtn instanceof HTMLButtonElement) {
+			saveBtn.disabled = true;
+		}
+
+		const socialLinks = {
+			...(twitter ? { twitter } : {}),
+			...(github ? { github } : {}),
+			...(website ? { website } : {}),
+		};
+
+		try {
+			const res = await fetch('/api/admin/users/save', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				credentials: 'include',
+				body: JSON.stringify({
+					id: id && Number.isInteger(id) && id > 0 ? id : undefined,
+					name,
+					email,
+					roleId,
+					password: password || undefined,
+					bio: bio || null,
+					avatarUrl: avatarUrl || null,
+					socialLinks:
+						Object.keys(socialLinks).length > 0 ? socialLinks : null,
+				}),
+			});
+
+			const payload = await res.json().catch(() => ({}));
+
+			if (!res.ok || !payload.ok) {
+				const messages = {
+					email_taken: 'Ya existe un usuario con ese email.',
+					invalid_input: 'Revisa los campos e inténtalo de nuevo.',
+					password_too_short:
+						'La contraseña debe tener al menos 8 caracteres.',
+					password_required: 'La contraseña es obligatoria.',
+					not_found: 'El usuario no existe.',
+					invalid_role: 'El rol seleccionado no es válido.',
+					last_admin:
+						'No se puede quitar el rol de administrador al último admin.',
+					unauthorized: 'No autorizado.',
+					forbidden: 'No tienes permisos de administrador.',
+				};
+				errorEl.textContent =
+					messages[payload.error] || 'No se pudo guardar el usuario.';
+				errorEl.classList.remove('hidden');
+				if (saveBtn instanceof HTMLButtonElement) saveBtn.disabled = false;
+				return;
+			}
+
+			window.location.href = '/admin/users';
+		} catch {
+			errorEl.textContent = 'Error de red. Inténtalo de nuevo.';
+			errorEl.classList.remove('hidden');
+			if (saveBtn instanceof HTMLButtonElement) saveBtn.disabled = false;
+		}
+	});
+</script>

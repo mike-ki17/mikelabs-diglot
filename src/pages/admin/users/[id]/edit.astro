@@ -1,0 +1,49 @@
+---
+import { asc, eq } from 'drizzle-orm';
+import UserForm from '../../../../components/admin/UserForm.astro';
+import { db } from '../../../../db';
+import { roles, users } from '../../../../db/schema';
+import { getAuthUser } from '../../../../lib/auth';
+import AdminLayout from '../../../../layouts/AdminLayout.astro';
+
+const authUser = await getAuthUser(Astro.cookies);
+if (!authUser) {
+	return Astro.redirect('/es/login?next=/admin/users');
+}
+if (authUser.roleName !== 'admin') {
+	return Astro.redirect('/es');
+}
+
+const idParam = Astro.params.id;
+const id = Number(idParam);
+if (!Number.isInteger(id) || id <= 0) {
+	return Astro.redirect('/admin/users');
+}
+
+const editUser = await db
+	.select({
+		id: users.id,
+		name: users.name,
+		email: users.email,
+		roleId: users.roleId,
+		bio: users.bio,
+		avatarUrl: users.avatarUrl,
+		socialLinks: users.socialLinks,
+	})
+	.from(users)
+	.where(eq(users.id, id))
+	.get();
+
+if (!editUser) {
+	return Astro.redirect('/admin/users');
+}
+
+const allRoles = await db
+	.select({ id: roles.id, name: roles.name })
+	.from(roles)
+	.orderBy(asc(roles.name));
+---
+
+<AdminLayout title={`Editar: ${editUser.name}`} user={authUser}>
+	<UserForm user={editUser} roles={allRoles} />
+</AdminLayout>

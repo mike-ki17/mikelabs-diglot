@@ -1,7 +1,7 @@
 ---
 import { count, eq } from 'drizzle-orm';
 import { db } from '../../db';
-import { posts } from '../../db/schema';
+import { posts, users } from '../../db/schema';
 import { getAuthUser } from '../../lib/auth';
 import AdminLayout from '../../layouts/AdminLayout.astro';
 
@@ -22,6 +22,7 @@ const [drafts] = await db
 	.select({ total: count() })
 	.from(posts)
 	.where(eq(posts.isPublished, false));
+const [userTotals] = await db.select({ total: count() }).from(users);
 
 const stats = [
 	{
@@ -39,11 +40,16 @@ const stats = [
 		value: drafts?.total ?? 0,
 		hint: 'Sin publicar',
 	},
+	{
+		label: 'Usuarios',
+		value: userTotals?.total ?? 0,
+		hint: 'Cuentas registradas',
+	},
 ];
 ---
 
 <AdminLayout title="Dashboard" user={user}>
-	<div class="grid gap-4 sm:grid-cols-3">
+	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
 		{
 			stats.map((stat) => (
 				<div class="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
@@ -75,6 +81,18 @@ const stats = [
 				class="rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
 			>
 				Ver todos los posts
+			</a>
+			<a
+				href="/admin/users/new"
+				class="rounded-full bg-slate-900 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-slate-800"
+			>
+				Nuevo usuario
+			</a>
+			<a
+				href="/admin/users"
+				class="rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
+			>
+				Ver usuarios
 			</a>
 		</div>
 	</div>

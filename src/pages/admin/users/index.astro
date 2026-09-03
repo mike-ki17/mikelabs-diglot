@@ -1,0 +1,171 @@
+---
+import { asc, eq } from 'drizzle-orm';
+import { db } from '../../../db';
+import { roles, users } from '../../../db/schema';
+import { getAuthUser } from '../../../lib/auth';
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+
+const user = await getAuthUser(Astro.cookies);
+if (!user) {
+	return Astro.redirect('/es/login?next=/admin/users');
+}
+if (user.roleName !== 'admin') {
+	return Astro.redirect('/es');
+}
+
+const allUsers = await db
+	.select({
+		id: users.id,
+		name: users.name,
+		email: users.email,
+		roleName: roles.name,
+	})
+	.from(users)
+	.innerJoin(roles, eq(users.roleId, roles.id))
+	.orderBy(asc(users.name));
+---
+
+<AdminLayout title="Usuarios" user={user}>
+	<div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+		<p class="text-sm text-slate-500">
+			{allUsers.length} usuario{allUsers.length === 1 ? '' : 's'} en total
+		</p>
+		<a
+			href="/admin/users/new"
+			class="rounded-full bg-slate-900 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-slate-800"
+		>
+			Nuevo usuario
+		</a>
+	</div>
+
+	<div class="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
+		{
+			allUsers.length === 0 ? (
+				<div class="px-6 py-12 text-center text-sm text-slate-500">
+					No hay usuarios todavía.{' '}
+					<a
+						href="/admin/users/new"
+						class="font-medium text-slate-800 underline-offset-2 hover:underline"
+					>
+						Crea el primero
+					</a>
+				</div>
+			) : (
+				<div class="overflow-x-auto">
+					<table class="w-full min-w-[640px] text-left text-sm">
+						<thead>
+							<tr class="border-b border-slate-100 bg-slate-50/80 text-xs font-semibold uppercase tracking-wide text-slate-400">
+								<th class="px-5 py-3 font-semibold">Usuario</th>
+								<th class="px-5 py-3 font-semibold">Rol</th>
+								<th class="px-5 py-3 font-semibold text-right">
+									Acciones
+								</th>
+							</tr>
+						</thead>
+						<tbody class="divide-y divide-slate-100">
+							{allUsers.map((row) => {
+								const isSelf = row.id === user.id;
+								return (
+									<tr class="transition-colors hover:bg-slate-50/60">
+										<td class="px-5 py-3.5">
+											<p class="font-medium text-slate-900">
+												{row.name}
+												{isSelf && (
+													<span class="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">
+														tú
+													</span>
+												)}
+											</p>
+											<p class="mt-0.5 text-xs text-slate-400">
+												{row.email}
+											</p>
+										</td>
+										<td class="px-5 py-3.5">
+											{row.roleName === 'admin' ? (
+												<span class="rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-800">
+													Admin
+												</span>
+											) : (
+												<span class="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
+													Lector
+												</span>
+											)}
+										</td>
+										<td class="px-5 py-3.5 text-right">
+											<div class="flex items-center justify-end gap-2">
+												<a
+													href={`/admin/users/${row.id}/edit`}
+													class="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
+												>
+													Editar
+												</a>
+												{!isSelf && (
+													<button
+														type="button"
+														class="delete-user-btn rounded-full border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-600 transition-colors hover:border-red-300 hover:bg-red-50"
+														data-id={row.id}
+														data-name={row.name}
+													>
+														Eliminar
+													</button>
+												)}
+											</div>
+										</td>
+									</tr>
+								);
+							})}
+						</tbody>
+					</table>
+				</div>
+			)
+		}
+	</div>
+</AdminLayout>
+
+<script>
+	document.querySelectorAll('.delete-user-btn').forEach((btn) => {
+		btn.addEventListener('click', async () => {
+			const el = btn as HTMLButtonElement;
+			const id = Number(el.dataset.id);
+			const name = el.dataset.name || 'este usuario';
+			if (!id) return;
+			if (
+				!confirm(
+					`¿Eliminar «${name}»? Esta acción no se puede deshacer.`,
+				)
+			) {
+				return;
+			}
+
+			el.disabled = true;
+			try {
+				const res = await fetch('/api/admin/users/delete', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					credentials: 'include',
+					body: JSON.stringify({ id }),
+				});
+				const payload = await res.json().catch(() => ({}));
+				if (!res.ok || !payload.ok) {
+					const messages = {
+						cannot_delete_self: 'No puedes eliminarte a ti mismo.',
+						last_admin: 'No se puede eliminar el último administrador.',
+						has_posts:
+							'Este usuario tiene posts. Reasigna o elimina sus posts antes.',
+						not_found: 'El usuario no existe.',
+						unauthorized: 'No autorizado.',
+					};
+					alert(
+						messages[payload.error] || 'No se pudo eliminar el usuario.',
+					);
+					el.disabled = false;
+					return;
+				}
+				window.location.reload();
+			} catch {
+				alert('No se pudo eliminar el usuario.');
+				el.disabled = false;
+			}
+		});
+	});
+</script>

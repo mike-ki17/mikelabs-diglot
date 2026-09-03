@@ -8,6 +8,13 @@
       "when": 1788458016028,
       "tag": "0000_hot_magma",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1788459643062,
+      "tag": "0001_black_lightspeed",
+      "breakpoints": true
     }
   ]
 }

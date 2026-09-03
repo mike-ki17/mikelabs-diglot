@@ -43,6 +43,8 @@ export const ui = {
 		commentsHeading: 'Comentarios',
 		commentPlaceholder: 'Deja un comentario...',
 		commentSubmit: 'Enviar',
+		commentLoginPrompt: 'Inicia sesión para dejar un comentario.',
+		commentError: 'No se pudo enviar el comentario. Inténtalo de nuevo.',
 		authorRole: 'Autor',
 	},
 	en: {
@@ -80,6 +82,8 @@ export const ui = {
 		commentsHeading: 'Comments',
 		commentPlaceholder: 'Leave a comment...',
 		commentSubmit: 'Submit',
+		commentLoginPrompt: 'Log in to leave a comment.',
+		commentError: 'Could not post the comment. Please try again.',
 		authorRole: 'Author',
 	},
 } as const;

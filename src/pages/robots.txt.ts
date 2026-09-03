@@ -8,6 +8,8 @@ export const GET: APIRoute = async ({ site }) => {
 	const body = `User-agent: *
 Allow: /
 Disallow: /api/
+Disallow: /admin
+Disallow: /login
 Disallow: /es/login
 Disallow: /en/login
 Disallow: /es/join

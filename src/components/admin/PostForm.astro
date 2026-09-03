@@ -1,0 +1,389 @@
+---
+import type { Post } from '../../db/schema';
+
+export interface Props {
+	post?: Pick<
+		Post,
+		| 'id'
+		| 'title'
+		| 'slug'
+		| 'content'
+		| 'excerpt'
+		| 'language'
+		| 'isPublished'
+	> | null;
+}
+
+const { post = null } = Astro.props;
+const isEdit = Boolean(post?.id);
+
+const inputClass =
+	'w-full rounded-xl border border-slate-200 bg-slate-50/80 px-4 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:border-slate-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-200';
+const labelClass = 'mb-1.5 block text-sm font-medium text-slate-700';
+---
+
+<div class="mx-auto max-w-3xl space-y-6">
+	{/* Dropzone */}
+	<div
+		id="md-dropzone"
+		class="relative flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-white px-6 py-10 text-center shadow-sm transition-colors hover:border-slate-300 hover:bg-slate-50/50"
+		role="button"
+		tabindex="0"
+		aria-label="Subir archivo Markdown"
+	>
+		<input
+			id="md-file-input"
+			type="file"
+			accept=".md,.markdown,text/markdown"
+			class="sr-only"
+		/>
+		<p class="text-sm font-medium text-slate-800">
+			Arrastra un archivo <code class="rounded bg-slate-100 px-1.5 py-0.5 text-xs"
+				>.md</code
+			> aquí
+		</p>
+		<p class="mt-1 text-xs text-slate-500">
+			o haz clic para seleccionar · se autocompletarán los campos
+		</p>
+		<p
+			id="md-dropzone-status"
+			class="mt-3 hidden text-sm text-slate-600"
+			role="status"
+		>
+		</p>
+	</div>
+
+	<form
+		id="post-form"
+		class="space-y-5 rounded-2xl border border-slate-100 bg-white p-6 shadow-sm sm:p-8"
+		novalidate
+	>
+		{
+			isEdit && post && (
+				<input type="hidden" id="post-id" name="id" value={post.id} />
+			)
+		}
+
+		<div>
+			<label for="title" class={labelClass}>Título</label>
+			<input
+				id="title"
+				name="title"
+				type="text"
+				required
+				value={post?.title ?? ''}
+				class={inputClass}
+				placeholder="Título del artículo"
+			/>
+		</div>
+
+		<div>
+			<label for="slug" class={labelClass}>Slug</label>
+			<input
+				id="slug"
+				name="slug"
+				type="text"
+				required
+				value={post?.slug ?? ''}
+				class={inputClass}
+				placeholder="titulo-del-articulo"
+			/>
+			<p class="mt-1.5 text-xs text-slate-400">
+				Se genera automáticamente desde el título. Puedes editarlo a mano.
+			</p>
+		</div>
+
+		<div class="grid gap-5 sm:grid-cols-2">
+			<div>
+				<label for="language" class={labelClass}>Idioma</label>
+				<select id="language" name="language" required class={inputClass}>
+					<option value="es" selected={post?.language === 'es' || !post}>
+						Español (ES)
+					</option>
+					<option value="en" selected={post?.language === 'en'}>
+						English (EN)
+					</option>
+				</select>
+			</div>
+
+			<div>
+				<label for="status" class={labelClass}>Estado</label>
+				<select id="status" name="status" required class={inputClass}>
+					<option value="draft" selected={!post?.isPublished}>
+						Borrador
+					</option>
+					<option value="published" selected={post?.isPublished === true}>
+						Publicado
+					</option>
+				</select>
+			</div>
+		</div>
+
+		<div>
+			<label for="excerpt" class={labelClass}>
+				Excerpt <span class="font-normal text-slate-400">(opcional)</span>
+			</label>
+			<textarea
+				id="excerpt"
+				name="excerpt"
+				rows={2}
+				class={inputClass}
+				placeholder="Resumen corto para SEO y listados"
+			>{post?.excerpt ?? ''}</textarea>
+		</div>
+
+		<div>
+			<label for="content" class={labelClass}>Contenido (Markdown)</label>
+			<textarea
+				id="content"
+				name="content"
+				rows={18}
+				required
+				class={`${inputClass} font-mono text-[13px] leading-relaxed`}
+				placeholder="# Título&#10;&#10;Escribe el contenido en Markdown…"
+			>{post?.content ?? ''}</textarea>
+		</div>
+
+		<p
+			id="form-error"
+			class="hidden text-sm text-red-600"
+			role="alert"
+		>
+		</p>
+
+		<div class="flex flex-wrap items-center gap-3 pt-2">
+			<button
+				type="submit"
+				id="save-btn"
+				class="rounded-full bg-slate-900 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-slate-800 disabled:opacity-60"
+			>
+				{isEdit ? 'Guardar cambios' : 'Crear post'}
+			</button>
+			<a
+				href="/admin/posts"
+				class="rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
+			>
+				Cancelar
+			</a>
+		</div>
+	</form>
+</div>
+
+<script>
+	function slugify(value) {
+		return value
+			.normalize('NFD')
+			.replace(/[\u0300-\u036f]/g, '')
+			.toLowerCase()
+			.trim()
+			.replace(/[^a-z0-9\s-]/g, '')
+			.replace(/[\s_]+/g, '-')
+			.replace(/-+/g, '-')
+			.replace(/^-|-$/g, '');
+	}
+
+	const form = document.getElementById('post-form');
+	const titleInput = document.getElementById('title');
+	const slugInput = document.getElementById('slug');
+	const languageSelect = document.getElementById('language');
+	const statusSelect = document.getElementById('status');
+	const excerptInput = document.getElementById('excerpt');
+	const contentInput = document.getElementById('content');
+	const postIdInput = document.getElementById('post-id');
+	const errorEl = document.getElementById('form-error');
+	const saveBtn = document.getElementById('save-btn');
+	const dropzone = document.getElementById('md-dropzone');
+	const fileInput = document.getElementById('md-file-input');
+	const dropStatus = document.getElementById('md-dropzone-status');
+
+	let slugManual = Boolean(slugInput?.value);
+
+	titleInput?.addEventListener('input', () => {
+		if (slugManual || !(titleInput instanceof HTMLInputElement)) return;
+		if (!(slugInput instanceof HTMLInputElement)) return;
+		slugInput.value = slugify(titleInput.value);
+	});
+
+	slugInput?.addEventListener('input', () => {
+		slugManual = true;
+	});
+
+	function showDropStatus(message, isError = false) {
+		if (!dropStatus) return;
+		dropStatus.textContent = message;
+		dropStatus.classList.remove('hidden', 'text-red-600', 'text-slate-600');
+		dropStatus.classList.add(isError ? 'text-red-600' : 'text-slate-600');
+	}
+
+	function fillForm(data) {
+		if (titleInput instanceof HTMLInputElement && data.title != null) {
+			titleInput.value = data.title;
+		}
+		if (slugInput instanceof HTMLInputElement && data.slug != null) {
+			slugInput.value = data.slug;
+			slugManual = true;
+		}
+		if (languageSelect instanceof HTMLSelectElement && data.language) {
+			languageSelect.value = data.language;
+		}
+		if (statusSelect instanceof HTMLSelectElement) {
+			statusSelect.value = data.isPublished ? 'published' : 'draft';
+		}
+		if (excerptInput instanceof HTMLTextAreaElement && data.excerpt != null) {
+			excerptInput.value = data.excerpt;
+		}
+		if (contentInput instanceof HTMLTextAreaElement && data.content != null) {
+			contentInput.value = data.content;
+		}
+	}
+
+	async function uploadMarkdown(file) {
+		const name = file.name || '';
+		if (!/\.(md|markdown)$/i.test(name)) {
+			showDropStatus('Solo se permiten archivos .md o .markdown.', true);
+			return;
+		}
+
+		showDropStatus(`Procesando ${name}…`);
+		const body = new FormData();
+		body.append('file', file);
+
+		try {
+			const res = await fetch('/api/admin/posts/upload', {
+				method: 'POST',
+				credentials: 'include',
+				body,
+			});
+			const payload = await res.json().catch(() => ({}));
+			if (!res.ok || !payload.ok) {
+				showDropStatus(
+					payload.error === 'invalid_file'
+						? 'Archivo inválido.'
+						: 'No se pudo procesar el archivo.',
+					true,
+				);
+				return;
+			}
+			fillForm(payload.data);
+			showDropStatus(`Campos rellenados desde ${name}. Revisa y guarda.`);
+		} catch {
+			showDropStatus('Error de red al subir el archivo.', true);
+		}
+	}
+
+	dropzone?.addEventListener('click', () => fileInput?.click());
+	dropzone?.addEventListener('keydown', (event) => {
+		if (event.key === 'Enter' || event.key === ' ') {
+			event.preventDefault();
+			fileInput?.click();
+		}
+	});
+
+	fileInput?.addEventListener('change', () => {
+		const file = fileInput instanceof HTMLInputElement ? fileInput.files?.[0] : null;
+		if (file) uploadMarkdown(file);
+		if (fileInput instanceof HTMLInputElement) fileInput.value = '';
+	});
+
+	['dragenter', 'dragover'].forEach((type) => {
+		dropzone?.addEventListener(type, (event) => {
+			event.preventDefault();
+			dropzone.classList.add('border-slate-400', 'bg-slate-50');
+		});
+	});
+
+	['dragleave', 'drop'].forEach((type) => {
+		dropzone?.addEventListener(type, (event) => {
+			event.preventDefault();
+			dropzone.classList.remove('border-slate-400', 'bg-slate-50');
+		});
+	});
+
+	dropzone?.addEventListener('drop', (event) => {
+		event.preventDefault();
+		const file = event.dataTransfer?.files?.[0];
+		if (file) uploadMarkdown(file);
+	});
+
+	form?.addEventListener('submit', async (event) => {
+		event.preventDefault();
+		if (!errorEl) return;
+
+		errorEl.classList.add('hidden');
+		errorEl.textContent = '';
+
+		const title =
+			titleInput instanceof HTMLInputElement ? titleInput.value.trim() : '';
+		const slug =
+			slugInput instanceof HTMLInputElement ? slugInput.value.trim() : '';
+		const language =
+			languageSelect instanceof HTMLSelectElement
+				? languageSelect.value
+				: 'es';
+		const isPublished =
+			statusSelect instanceof HTMLSelectElement &&
+			statusSelect.value === 'published';
+		const excerpt =
+			excerptInput instanceof HTMLTextAreaElement
+				? excerptInput.value.trim()
+				: '';
+		const content =
+			contentInput instanceof HTMLTextAreaElement
+				? contentInput.value.trim()
+				: '';
+		const id =
+			postIdInput instanceof HTMLInputElement
+				? Number(postIdInput.value)
+				: undefined;
+
+		if (!title || !slug || !content) {
+			errorEl.textContent = 'Completa título, slug y contenido.';
+			errorEl.classList.remove('hidden');
+			return;
+		}
+
+		if (saveBtn instanceof HTMLButtonElement) {
+			saveBtn.disabled = true;
+		}
+
+		try {
+			const res = await fetch('/api/admin/posts/save', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				credentials: 'include',
+				body: JSON.stringify({
+					id: id && Number.isInteger(id) && id > 0 ? id : undefined,
+					title,
+					slug,
+					language,
+					content,
+					excerpt: excerpt || null,
+					isPublished,
+				}),
+			});
+
+			const payload = await res.json().catch(() => ({}));
+
+			if (!res.ok || !payload.ok) {
+				const messages = {
+					slug_taken: 'Ya existe un post con ese slug e idioma.',
+					invalid_input: 'Revisa los campos e inténtalo de nuevo.',
+					not_found: 'El post no existe.',
+					unauthorized: 'No autorizado.',
+					forbidden: 'No tienes permisos de administrador.',
+				};
+				errorEl.textContent =
+					messages[payload.error] || 'No se pudo guardar el post.';
+				errorEl.classList.remove('hidden');
+				if (saveBtn instanceof HTMLButtonElement) saveBtn.disabled = false;
+				return;
+			}
+
+			window.location.href = '/admin/posts';
+		} catch {
+			errorEl.textContent = 'Error de red. Inténtalo de nuevo.';
+			errorEl.classList.remove('hidden');
+			if (saveBtn instanceof HTMLButtonElement) saveBtn.disabled = false;
+		}
+	});
+</script>

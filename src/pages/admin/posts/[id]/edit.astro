@@ -1,0 +1,44 @@
+---
+import { eq } from 'drizzle-orm';
+import PostForm from '../../../../components/admin/PostForm.astro';
+import { db } from '../../../../db';
+import { posts } from '../../../../db/schema';
+import { getAuthUser } from '../../../../lib/auth';
+import AdminLayout from '../../../../layouts/AdminLayout.astro';
+
+const user = await getAuthUser(Astro.cookies);
+if (!user) {
+	return Astro.redirect('/es/login?next=/admin/posts');
+}
+if (user.roleName !== 'admin') {
+	return Astro.redirect('/es');
+}
+
+const idParam = Astro.params.id;
+const id = Number(idParam);
+if (!Number.isInteger(id) || id <= 0) {
+	return Astro.redirect('/admin/posts');
+}
+
+const post = await db
+	.select({
+		id: posts.id,
+		title: posts.title,
+		slug: posts.slug,
+		content: posts.content,
+		excerpt: posts.excerpt,
+		language: posts.language,
+		isPublished: posts.isPublished,
+	})
+	.from(posts)
+	.where(eq(posts.id, id))
+	.get();
+
+if (!post) {
+	return Astro.redirect('/admin/posts');
+}
+---
+
+<AdminLayout title={`Editar: ${post.title}`} user={user}>
+	<PostForm post={post} />
+</AdminLayout>

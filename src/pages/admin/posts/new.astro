@@ -1,0 +1,17 @@
+---
+import PostForm from '../../../components/admin/PostForm.astro';
+import { getAuthUser } from '../../../lib/auth';
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+
+const user = await getAuthUser(Astro.cookies);
+if (!user) {
+	return Astro.redirect('/es/login?next=/admin/posts/new');
+}
+if (user.roleName !== 'admin') {
+	return Astro.redirect('/es');
+}
+---
+
+<AdminLayout title="Nuevo post" user={user}>
+	<PostForm />
+</AdminLayout>

@@ -60,6 +60,14 @@ function langHref(code: Lang): string {
 			{
 				user ? (
 					<div class="flex items-center gap-3">
+						{user.roleName === 'admin' && (
+							<a
+								href="/admin"
+								class="hidden rounded-full border border-slate-200 bg-white/80 px-3 py-1.5 text-sm font-medium text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 sm:inline"
+							>
+								Admin
+							</a>
+						)}
 						<div class="flex items-center gap-2">
 							{user.avatarUrl ? (
 								<Image

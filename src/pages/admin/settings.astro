@@ -1,0 +1,22 @@
+---
+import { getAuthUser } from '../../lib/auth';
+import AdminLayout from '../../layouts/AdminLayout.astro';
+
+const user = await getAuthUser(Astro.cookies);
+if (!user) {
+	return Astro.redirect('/es/login?next=/admin/settings');
+}
+if (user.roleName !== 'admin') {
+	return Astro.redirect('/es');
+}
+---
+
+<AdminLayout title="Configuración" user={user}>
+	<div class="max-w-xl rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+		<h2 class="text-lg font-semibold text-slate-900">Próximamente</h2>
+		<p class="mt-2 text-sm leading-relaxed text-slate-600">
+			Aquí podrás ajustar opciones del blog (nombre del sitio, autor por
+			defecto, etc.). Por ahora usa el dashboard y la sección de posts.
+		</p>
+	</div>
+</AdminLayout>

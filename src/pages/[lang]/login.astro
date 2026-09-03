@@ -1,6 +1,6 @@
 ---
 import { isLang, t } from '../../i18n/ui';
-import { getAuthUser } from '../../lib/auth';
+import { getAuthUser, safeAdminNext } from '../../lib/auth';
 import { pageAlternates } from '../../lib/seo';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 
@@ -14,9 +14,14 @@ const lang = langParam;
 const copy = t(lang);
 const user = await getAuthUser(Astro.cookies);
 const alternates = pageAlternates(lang, '/login', Astro.site);
+const nextAfterLogin = safeAdminNext(Astro.url.searchParams.get('next'));
 
 if (user) {
-	return Astro.redirect(`/${lang}`);
+	const dest =
+		user.roleName === 'admin' && nextAfterLogin
+			? nextAfterLogin
+			: `/${lang}`;
+	return Astro.redirect(dest);
 }
 ---
 
@@ -97,7 +102,7 @@ if (user) {
 	</section>
 </BaseLayout>
 
-<script define:vars={{ lang }}>
+<script define:vars={{ lang, nextAfterLogin }}>
 	const form = document.getElementById('login-form');
 	const errorEl = document.getElementById('login-error');
 
@@ -129,7 +134,7 @@ if (user) {
 				return;
 			}
 
-			window.location.href = `/${lang}`;
+			window.location.href = nextAfterLogin || `/${lang}`;
 		} catch {
 			errorEl.textContent =
 				errorEl.dataset.default || 'Invalid email or password.';

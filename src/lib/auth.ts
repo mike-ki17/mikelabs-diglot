@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import { eq } from 'drizzle-orm';
 import { SignJWT, jwtVerify } from 'jose';
 import { db } from '../db';
-import { users } from '../db/schema';
+import { roles, users } from '../db/schema';
 
 export const AUTH_COOKIE = 'session';
 const SESSION_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
@@ -67,6 +67,8 @@ export type AuthUser = {
 	name: string;
 	email: string;
 	avatarUrl: string | null;
+	roleId: number;
+	roleName: string;
 };
 
 export async function getAuthUser(
@@ -84,10 +86,29 @@ export async function getAuthUser(
 			name: users.name,
 			email: users.email,
 			avatarUrl: users.avatarUrl,
+			roleId: users.roleId,
+			roleName: roles.name,
 		})
 		.from(users)
+		.innerJoin(roles, eq(users.roleId, roles.id))
 		.where(eq(users.id, userId))
 		.get();
 
 	return user ?? null;
+}
+
+export async function requireAdmin(
+	cookies: AstroCookies,
+): Promise<AuthUser | null> {
+	const user = await getAuthUser(cookies);
+	if (!user || user.roleName !== 'admin') return null;
+	return user;
+}
+
+/** Safe redirect target: only allow paths under /admin. */
+export function safeAdminNext(next: string | null | undefined): string | null {
+	if (!next || typeof next !== 'string') return null;
+	if (!next.startsWith('/admin')) return null;
+	if (next.startsWith('//') || next.includes('\\')) return null;
+	return next;
 }

@@ -1,0 +1,167 @@
+---
+import { desc } from 'drizzle-orm';
+import { db } from '../../../db';
+import { posts } from '../../../db/schema';
+import { getAuthUser } from '../../../lib/auth';
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+
+const user = await getAuthUser(Astro.cookies);
+if (!user) {
+	return Astro.redirect('/es/login?next=/admin/posts');
+}
+if (user.roleName !== 'admin') {
+	return Astro.redirect('/es');
+}
+
+const allPosts = await db
+	.select({
+		id: posts.id,
+		title: posts.title,
+		slug: posts.slug,
+		language: posts.language,
+		isPublished: posts.isPublished,
+		createdAt: posts.createdAt,
+	})
+	.from(posts)
+	.orderBy(desc(posts.createdAt));
+
+function formatDate(date: Date | null): string {
+	if (!date) return '—';
+	return new Intl.DateTimeFormat('es-ES', {
+		year: 'numeric',
+		month: 'short',
+		day: 'numeric',
+	}).format(date);
+}
+---
+
+<AdminLayout title="Posts" user={user}>
+	<div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+		<p class="text-sm text-slate-500">
+			{allPosts.length} post{allPosts.length === 1 ? '' : 's'} en total
+		</p>
+		<a
+			href="/admin/posts/new"
+			class="rounded-full bg-slate-900 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-slate-800"
+		>
+			Nuevo post
+		</a>
+	</div>
+
+	<div class="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
+		{
+			allPosts.length === 0 ? (
+				<div class="px-6 py-12 text-center text-sm text-slate-500">
+					No hay posts todavía.{' '}
+					<a
+						href="/admin/posts/new"
+						class="font-medium text-slate-800 underline-offset-2 hover:underline"
+					>
+						Crea el primero
+					</a>
+				</div>
+			) : (
+				<div class="overflow-x-auto">
+					<table class="w-full min-w-[640px] text-left text-sm">
+						<thead>
+							<tr class="border-b border-slate-100 bg-slate-50/80 text-xs font-semibold uppercase tracking-wide text-slate-400">
+								<th class="px-5 py-3 font-semibold">Título</th>
+								<th class="px-5 py-3 font-semibold">Idioma</th>
+								<th class="px-5 py-3 font-semibold">Estado</th>
+								<th class="px-5 py-3 font-semibold">Fecha</th>
+								<th class="px-5 py-3 font-semibold text-right">
+									Acciones
+								</th>
+							</tr>
+						</thead>
+						<tbody class="divide-y divide-slate-100">
+							{allPosts.map((post) => (
+								<tr class="transition-colors hover:bg-slate-50/60">
+									<td class="px-5 py-3.5">
+										<p class="font-medium text-slate-900">
+											{post.title}
+										</p>
+										<p class="mt-0.5 text-xs text-slate-400">
+											/{post.language}/blog/{post.slug}
+										</p>
+									</td>
+									<td class="px-5 py-3.5">
+										<span class="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold uppercase text-slate-600">
+											{post.language}
+										</span>
+									</td>
+									<td class="px-5 py-3.5">
+										{post.isPublished ? (
+											<span class="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+												Publicado
+											</span>
+										) : (
+											<span class="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
+												Borrador
+											</span>
+										)}
+									</td>
+									<td class="px-5 py-3.5 text-slate-600">
+										{formatDate(post.createdAt)}
+									</td>
+									<td class="px-5 py-3.5 text-right">
+										<div class="flex items-center justify-end gap-2">
+											<a
+												href={`/admin/posts/${post.id}/edit`}
+												class="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
+											>
+												Editar
+											</a>
+											<button
+												type="button"
+												class="delete-post-btn rounded-full border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-600 transition-colors hover:border-red-300 hover:bg-red-50"
+												data-id={post.id}
+												data-title={post.title}
+											>
+												Eliminar
+											</button>
+										</div>
+									</td>
+								</tr>
+							))}
+						</tbody>
+					</table>
+				</div>
+			)
+		}
+	</div>
+</AdminLayout>
+
+<script>
+	document.querySelectorAll('.delete-post-btn').forEach((btn) => {
+		btn.addEventListener('click', async () => {
+			const el = btn as HTMLButtonElement;
+			const id = Number(el.dataset.id);
+			const title = el.dataset.title || 'este post';
+			if (!id) return;
+			if (!confirm(`¿Eliminar «${title}»? Esta acción no se puede deshacer.`)) {
+				return;
+			}
+
+			el.disabled = true;
+			try {
+				const res = await fetch('/api/admin/posts/delete', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					credentials: 'include',
+					body: JSON.stringify({ id }),
+				});
+				const payload = await res.json().catch(() => ({}));
+				if (!res.ok || !payload.ok) {
+					alert('No se pudo eliminar el post.');
+					el.disabled = false;
+					return;
+				}
+				window.location.reload();
+			} catch {
+				alert('No se pudo eliminar el post.');
+				el.disabled = false;
+			}
+		});
+	});
+</script>

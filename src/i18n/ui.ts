@@ -11,7 +11,7 @@ export const ui = {
 	es: {
 		siteName: 'Mike',
 		homeTitle: 'Blog',
-		homeSubtitle: 'Artículos en español e inglés.',
+		homeSubtitle: 'Blog de MikeLabs.',
 		postsHeading: 'Artículos',
 		readMore: 'Leer más',
 		noPosts: 'No hay artículos publicados todavía.',
@@ -50,7 +50,7 @@ export const ui = {
 	en: {
 		siteName: 'Mike',
 		homeTitle: 'Blog',
-		homeSubtitle: 'Articles in Spanish and English.',
+		homeSubtitle: 'The MikeLabs blog.',
 		postsHeading: 'Articles',
 		readMore: 'Read more',
 		noPosts: 'No published articles yet.',

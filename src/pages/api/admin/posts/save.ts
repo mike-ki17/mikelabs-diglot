@@ -20,6 +20,7 @@ type SaveBody = {
 	language?: unknown;
 	content?: unknown;
 	excerpt?: unknown;
+	coverImageUrl?: unknown;
 	isPublished?: unknown;
 };
 
@@ -48,6 +49,12 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 			: body.excerpt === null
 				? ''
 				: '';
+	const coverImageUrlRaw =
+		typeof body.coverImageUrl === 'string'
+			? body.coverImageUrl.trim()
+			: body.coverImageUrl === null
+				? ''
+				: '';
 
 	const id =
 		typeof body.id === 'number' && Number.isInteger(body.id) && body.id > 0
@@ -59,6 +66,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 	}
 
 	const excerpt = excerptRaw || excerptFromContent(content);
+	const coverImageUrl = coverImageUrlRaw || null;
 
 	const conflictQuery = id
 		? and(
@@ -99,6 +107,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 				language,
 				content,
 				excerpt,
+				coverImageUrl,
 				isPublished,
 				updatedAt: now,
 			})
@@ -121,6 +130,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 			language,
 			content,
 			excerpt,
+			coverImageUrl,
 			isPublished,
 			translationGroupId,
 			createdAt: now,

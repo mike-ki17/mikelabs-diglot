@@ -96,13 +96,20 @@ const { title, user, currentPath = Astro.url.pathname } = Astro.props;
 						>
 							Ver sitio
 						</a>
-						<button
-							type="button"
-							id="admin-logout-btn"
-							class="rounded-full border border-slate-700 px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:border-slate-600 hover:bg-slate-800 hover:text-white"
+						<form
+							id="admin-logout-form"
+							method="POST"
+							action="/api/auth/logout"
 						>
-							Cerrar sesión
-						</button>
+							<input type="hidden" name="redirectTo" value="/es/login" />
+							<button
+								type="submit"
+								id="admin-logout-btn"
+								class="w-full rounded-full border border-slate-700 px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:border-slate-600 hover:bg-slate-800 hover:text-white"
+							>
+								Cerrar sesión
+							</button>
+						</form>
 					</div>
 				</div>
 			</aside>
@@ -124,8 +131,10 @@ const { title, user, currentPath = Astro.url.pathname } = Astro.props;
 		</div>
 
 		<script>
+			const form = document.getElementById('admin-logout-form');
 			const btn = document.getElementById('admin-logout-btn');
-			btn?.addEventListener('click', async () => {
+			form?.addEventListener('submit', async (event) => {
+				event.preventDefault();
 				try {
 					await fetch('/api/auth/logout', {
 						method: 'POST',

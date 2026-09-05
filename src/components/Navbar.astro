@@ -87,14 +87,21 @@ function langHref(code: Lang): string {
 								{user.name}
 							</span>
 						</div>
-						<button
-							type="button"
-							id="logout-btn"
-							data-lang={lang}
-							class="rounded-full border border-slate-200 bg-white/80 px-4 py-1.5 text-sm font-medium text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
+						<form
+							id="logout-form"
+							method="POST"
+							action="/api/auth/logout"
 						>
-							{copy.logOut}
-						</button>
+							<input type="hidden" name="redirectTo" value={`/${lang}`} />
+							<button
+								type="submit"
+								id="logout-btn"
+								data-lang={lang}
+								class="rounded-full border border-slate-200 bg-white/80 px-4 py-1.5 text-sm font-medium text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
+							>
+								{copy.logOut}
+							</button>
+						</form>
 					</div>
 				) : (
 					<>
@@ -120,9 +127,11 @@ function langHref(code: Lang): string {
 {
 	user && (
 		<script>
+			const form = document.getElementById('logout-form');
 			const btn = document.getElementById('logout-btn');
-			btn?.addEventListener('click', async () => {
-				const lang = btn.dataset.lang || 'es';
+			form?.addEventListener('submit', async (event) => {
+				event.preventDefault();
+				const lang = btn?.dataset.lang || 'es';
 				try {
 					await fetch('/api/auth/logout', {
 						method: 'POST',

@@ -59,7 +59,14 @@ export function setAuthCookie(cookies: AstroCookies, token: string): void {
 }
 
 export function clearAuthCookie(cookies: AstroCookies): void {
-	cookies.delete(AUTH_COOKIE, { path: '/' });
+	cookies.set(AUTH_COOKIE, '', {
+		httpOnly: true,
+		secure: import.meta.env.PROD,
+		path: '/',
+		sameSite: 'lax',
+		maxAge: 0,
+		expires: new Date(0),
+	});
 }
 
 export type AuthUser = {
